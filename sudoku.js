@@ -1,16 +1,51 @@
-function countInRow(row, value) {
-  return row.reduce((n, x) => n + (x === value), 0);
+const sectionToTopLeftMap = {
+  1: [0,0],
+  2: [0,3],
+  3: [0,6],
+  4: [3,0],
+  5: [3,3],
+  6: [3,6],
+  7: [6,0],
+  8: [6,3],
+  9: [6,6]
+}
+
+function countInRow(board, row, value) {
+  return board[row-1].reduce((n, x) => n + (x === value), 0);
+}
+
+function countInSection(board, section, value) {
+  var startCoordinates = sectionToTopLeftMap[section];
+  var row = startCoordinates[0];
+  var column = startCoordinates[1];
+
+  var count = 0;
+  for (var i = 0; i < 3; i++) {
+    for (var j = 0; j < 3; j++) {
+      if (board[row][column] === value) {
+        count += 1;
+      }
+      column += 1;
+    }
+    column = startCoordinates[1];
+    row += 1;
+  }
+  return count;
+}
+
+function countInColumn(board, column, value) {
+  var countNum = 0;
+  board.forEach((row) => {
+    if (row[column-1] === value) {
+      countNum += 1;
+    }
+  });
+  return countNum;
 }
 
 function checkColumn(board, column) {
-  for (var i = 0; i < 10; i++) {
-    countNum = 0;
-    board.forEach((row) => {
-      if (row[column] === i) {
-        countNum += 1;
-      }
-    });
-    if (countNum > 1) {
+  for (var i = 1; i < 10; i++) {
+    if (countInColumn(board, column, i) > 1) {
       return false;
     }
   }
@@ -18,7 +53,21 @@ function checkColumn(board, column) {
 }
 
 function checkSection(board, section) {
-  
+  for (var i = 1; i < 10; i++) {
+    if (countInSection(board, section, i) > 1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function checkRow(board, row) {
+  for (var i = 1; i < 10; i++) {
+    if (countInRow(board, row, i) > 1) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function calculateSection(row, column) {
@@ -28,13 +77,24 @@ function calculateSection(row, column) {
 }
 
 function legalBoard(board) {
-  board.forEach((row) => {
-    for (var i = 1, i < 10; i++) {
-      if (countInRow(row, i) > 0) {
-        return false;
-      }
+  for (var i = 1; i < 10; i ++) {
+    if (!(checkRow(board, i) && checkColumn(board, i) && checkSection(board, i))) {
+      return false;
     }
-  });
+  }
+  return true;
+}
+
+function solved(board) {
+  if (!legalBoard(board)) {
+    return false;
+  }
+
+  for (var i = 1; i < 10; i++) {
+    if (countInRow(board, i, "blank") > 0) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -82,15 +142,21 @@ function solve(board) {
       if (square === "blank") {
         for (var i = 1; i < 10; i++) {
           row[index] = i;
-          if (legalBoard(board)) {
-            if (solved(board)) {
-              break;
-            } else {
-              solve(board);
-            }
+          if (legalBoard(board) && solved(board)) {
+            return;
+          } else if (!legalBoard(board)) {
+              row[index] = 'blank';
+          } else {
+            solve(board);
           }
         }
       }
     })
   });
 }
+
+var board = makeBoard();
+printBoard(board);
+//console.log(legalBoard(board));
+//console.log(solved(board));
+solve(board);
